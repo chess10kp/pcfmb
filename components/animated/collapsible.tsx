@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp } from "lucide-react-native";
+import { LucideIcon } from "lucide-react-native";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
@@ -12,6 +12,8 @@ import {
 // Define the props for the Collapsible component
 type CollapsibleProps = {
   title: string;
+  triggerOpen?: LucideIcon;
+  triggerClose?: LucideIcon;
   children: React.ReactNode;
   initialCollapsed?: boolean;
   duration?: number; // Animation duration in ms
@@ -23,12 +25,16 @@ type CollapsibleProps = {
  *
  * @param {CollapsibleProps} props - The props for the component.
  * @param {string} props.title - The title displayed in the header.
+ * @param {React.ReactNode} props.triggerOpen - The trigger to expand/collapse the component.
+ * @param {React.ReactNode} props.triggerClose - The triggle when the component is collapsed.
  * @param {React.ReactNode} props.children - The content to be collapsed/expanded.
  * @param {boolean} [props.initialCollapsed=true] - Whether the component should be collapsed initially.
  * @param {number} [props.duration=300] - The duration of the animation in milliseconds.
  */
 export const Collapsible = ({
   title,
+  triggerOpen,
+  triggerClose,
   children,
   initialCollapsed = true,
   duration = 300,
@@ -84,7 +90,7 @@ export const Collapsible = ({
   };
 
   // Determine the icon to display based on the collapsed state
-  const Icon = collapsed ? ChevronDown : ChevronUp;
+  const Icon = collapsed ? triggerClose : triggerOpen;
 
   return (
     <View className="w-full my-2 rounded-lg overflow-hidden shadow-md">

@@ -1,16 +1,15 @@
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Bluetooth,
-  Grip,
-  MicOff,
-  Phone,
-  PhoneOff,
-  Plus,
-  Video,
-  Volume2,
-} from "lucide-react-native";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, ColorValue, Pressable, Text, View } from "react-native";
+import { Bluetooth } from "~/lib/icons/Bluetooth";
+import { EllipsisVertical } from "~/lib/icons/EllipsisVertical";
+import { Grip } from "~/lib/icons/Grip";
+import { MicOff } from "~/lib/icons/MicOff";
+import { Phone } from "~/lib/icons/Phone";
+import { PhoneOff } from "~/lib/icons/PhoneOff";
+import { Plus } from "~/lib/icons/Plus";
+import { Video } from "~/lib/icons/Video";
+import { Volume2 } from "~/lib/icons/Volume2";
 import { type ScheduledCall } from "~/lib/types/types";
 import { cn } from "~/lib/utils";
 
@@ -41,6 +40,7 @@ export const SamsungCallScreen = (props: Props) => {
 
   const acceptScale = useRef(new Animated.Value(1)).current;
   const rejectScale = useRef(new Animated.Value(1)).current;
+  const [callDuration, setCallDuration] = useState(0);
 
   const animateButton = (scale: Animated.Value, toValue: number) => {
     scale.stopAnimation();
@@ -51,6 +51,65 @@ export const SamsungCallScreen = (props: Props) => {
       tension: 100,
       friction: 8,
     }).start();
+  };
+
+  const callActions = [
+    [
+      {
+        icon: Plus,
+        label: "Add Call",
+        enabled: false,
+        onPress: () => {},
+      },
+      {
+        icon: Video,
+        label: "Video",
+        enabled: false,
+        onPress: () => {},
+      },
+      {
+        icon: Bluetooth,
+        label: "Bluetooth",
+        enabled: true,
+        onPress: () => {},
+      },
+    ],
+    [
+      {
+        icon: Volume2,
+        label: "Speaker",
+        enabled: true,
+        onPress: () => {},
+      },
+      {
+        icon: MicOff,
+        label: "Mute",
+        enabled: false,
+        onPress: () => {},
+      },
+      {
+        icon: Grip,
+        label: "Keypad",
+        enabled: true,
+        onPress: () => {},
+      },
+    ],
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCallDuration((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (
@@ -130,52 +189,70 @@ export const SamsungCallScreen = (props: Props) => {
           </View>
         </View>
       )}
+
       {isCallAccepted && (
         <View className="flex-1 w-full">
-          <View className="flex-1 mt-16 justify-start items-center px-6">
-            <Text
-              className={cn(
-                "text-5xl font-semibold text-foreground mb-2",
-                props.textColor && `text-${props.textColor}`
-              )}
-            >
-              {callerInformation.callerName || callerInformation.callerNumber}
-            </Text>
+          <View className="flex-1 mt-8 gap-16 justify-start items-center px-6">
+            <View className="flex-row items-center mx-8 justify-between w-full">
+              <View className="flex-1"></View>
+              <View className="flex-row items-center gap-2 justify-center w-full">
+                <Phone size={16} color="white" fill="white" />
+                <Text className="text-white text-center text-xl">
+                  {formatTime(callDuration)}
+                </Text>
+              </View>
+              <View>
+                <EllipsisVertical size={16} color="white" fill="white" />
+              </View>
+            </View>
+            <View className="flex-col items-center justify-center w-full">
+              <Text
+                className={cn(
+                  "text-5xl font-semibold text-foreground mb-2",
+                  props.textColor && `text-${props.textColor}`
+                )}
+              >
+                {callerInformation?.name || callerInformation?.number}
+              </Text>
+              <Text
+                className={cn(
+                  "text-xl text-muted-foreground",
+                  props.textColor && `text-${props.textColor}`
+                )}
+              >
+                Mobile +{callerInformation?.number}
+              </Text>
+            </View>
           </View>
 
           {/* Bento with active call actions 9x9 grid */}
-          <View className="mb-20 px-12 ">
-            <View className="rounded-lg bg-black/30 p-4">
-              {/* Row 1 */}
-              <View className="flex-row justify-center gap-4 mb-4">
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <Plus size={24} color="white" />
-                  <Text className="text-white text-sm">Add Call</Text>
+          <View className="mb-20 px-12 rounded-xl">
+            <View className="rounded-xl gap-4 bg-black/70 p-4">
+              {callActions.map((row, idx) => (
+                <View key={idx} className="flex-row justify-center gap-8 mb-4">
+                  {row.map((action) => (
+                    <View
+                      key={action.label}
+                      className="w-20 h-20 rounded-full p-2 gap-2 items-center justify-center"
+                    >
+                      <action.icon
+                        size={32}
+                        className={`${
+                          action.enabled ? "text-white" : "text-white/50"
+                        }`}
+                      />
+                      <Text
+                        className={cn(
+                          "text-sm",
+                          action.enabled ? "text-white" : "text-white/50"
+                        )}
+                      >
+                        {action.label}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <Video size={24} color="white" />
-                  <Text className="text-white text-sm">Video</Text>
-                </View>
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <Bluetooth size={24} color="white" />
-                  <Text className="text-white text-sm">Bluetooth</Text>
-                </View>
-              </View>
-              {/* Row 2 */}
-              <View className="flex-row justify-center gap-4 mb-4">
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <Volume2 size={24} color="white" />
-                  <Text className="text-white text-sm">Speaker</Text>
-                </View>
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <MicOff size={24} color="white" />
-                  <Text className="text-white text-sm">Mute</Text>
-                </View>
-                <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
-                  <Grip size={24} color="white" />
-                  <Text className="text-white text-sm">Keypad</Text>
-                </View>
-              </View>
+              ))}
               {/* Row 3 */}
               <View className="flex-row justify-center gap-4">
                 <View className="w-20 h-20 rounded-full p-2 items-center justify-center">
