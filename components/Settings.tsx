@@ -66,19 +66,25 @@ export default function SettingsScreen() {
       id: "samsung",
       name: "Samsung",
       icon: "📱",
-      iconComponent: <AntDesign name="android" size={16} color="black" />,
+      iconComponent: (color: string) => (
+        <AntDesign name="android" size={16} color={color} />
+      ),
     },
     {
       id: "iphone",
       name: "iPhone",
       icon: "🍎",
-      iconComponent: <AntDesign name="apple1" size={16} color="black" />,
+      iconComponent: (color: string) => (
+        <AntDesign name="apple1" size={16} color={color} />
+      ),
     },
     {
       id: "pixel",
       name: "Pixel",
       icon: "📱",
-      iconComponent: <AntDesign name="google" size={16} color="black" />,
+      iconComponent: (color: string) => (
+        <AntDesign name="google" size={16} color={color} />
+      ),
     },
   ];
 
@@ -220,19 +226,31 @@ export default function SettingsScreen() {
             {screenTypes.map((type) => (
               <Button
                 key={type.id}
-                variant={
-                  formData.screenType === type.id ? "default" : "outline"
-                }
                 onPress={() =>
                   setFormData((prev) => ({
                     ...prev,
                     screenType: type.id as any,
                   }))
                 }
-                className="flex-1"
+                className={`flex-1 ${
+                  formData.screenType === type.id
+                    ? "bg-foreground text-background"
+                    : "bg-background text-foreground"
+                }`}
               >
-                <Text>{type.name}</Text>
-                {type.iconComponent}
+                <Text
+                  className={`${
+                    formData.screenType === type.id
+                      ? "text-background"
+                      : "text-foreground"
+                  }`}
+                >
+                  {type.name}
+                </Text>
+
+                {type.iconComponent(
+                  formData.screenType === type.id ? "white" : "black"
+                )}
               </Button>
             ))}
           </View>
