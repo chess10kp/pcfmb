@@ -1,14 +1,19 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Calendar, Clock, Phone, Settings, User } from "lucide-react-native";
-import { useState } from "react";
-import { ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { Calendar, Clock, Phone, User } from "lucide-react-native";
+import { useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import {
+  Animated,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import AntDesign from "react-native-vector-icons/AntDesign";
+import { Collapsible } from "~/components/animated/collapsible";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "~/components/ui/collapsible";
 
 interface ScheduledCall {
   id: string;
@@ -28,7 +33,24 @@ export default function SettingsScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [editingCall, setEditingCall] = useState<ScheduledCall | null>(null);
 
-  // Form state for new/edit call
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const animatedHeight = useRef(new Animated.Value(0)).current;
+
+  const toggleCollapsible = () => {
+    setIsCollapsed(!isCollapsed);
+    Animated.timing(animatedHeight, {
+      toValue: isCollapsed ? 0 : 1000,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const {
+    handleSubmit,
+    register,
+    formState: { errors },
+  } = useForm();
+
   const [formData, setFormData] = useState({
     name: "",
     number: "",
@@ -40,9 +62,24 @@ export default function SettingsScreen() {
   });
 
   const screenTypes = [
-    { id: "samsung", name: "Samsung", icon: "📱" },
-    { id: "iphone", name: "iPhone", icon: "🍎" },
-    { id: "pixel", name: "Pixel", icon: "📱" },
+    {
+      id: "samsung",
+      name: "Samsung",
+      icon: "📱",
+      iconComponent: <AntDesign name="android" size={16} color="black" />,
+    },
+    {
+      id: "iphone",
+      name: "iPhone",
+      icon: "🍎",
+      iconComponent: <AntDesign name="apple1" size={16} color="black" />,
+    },
+    {
+      id: "pixel",
+      name: "Pixel",
+      icon: "📱",
+      iconComponent: <AntDesign name="google" size={16} color="black" />,
+    },
   ];
 
   const daysOfWeek = [
@@ -130,184 +167,155 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView className="flex-1 bg-background p-4">
-      <View className="mb-6">
-        <Text className="text-3xl font-bold text-foreground mb-2">
-          Settings
-        </Text>
-        <Text className="text-muted-foreground">
-          Configure your scheduled phone calls
-        </Text>
+      <View>
+        <Text className="text-3xl font-bold text-foreground ">Settings</Text>
       </View>
 
       {/* Add/Edit Call Form */}
-      <Collapsible>
-        <CollapsibleTrigger className="flex flex-row items-center gap-2">
-          <View className="flex flex-row items-center gap-2">
-            <Phone size={20} className="text-muted-foreground" />
-            <Text className="text-muted-foreground">
-              {editingCall ? "Edit Call" : "Add New Call"}
-            </Text>
-          </View>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          {/* Caller Information */}
-          <View className="space-y-3">
-            <View className="flex-row items-center gap-2">
-              <User size={16} />
-              <Text className="text-sm font-medium">Caller Information</Text>
-            </View>
-
-            <TextInput
-              placeholder="Caller Name"
-              value={formData.name}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, name: text }))
-              }
-              className="border border-border rounded-lg p-3 bg-card text-foreground"
-            />
-
-            <TextInput
-              placeholder="Phone Number"
-              value={formData.number}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, number: text }))
-              }
-              className="border border-border rounded-lg p-3 bg-card text-foreground"
-              keyboardType="phone-pad"
-            />
-
-            <TextInput
-              placeholder="Location"
-              value={formData.location}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, location: text }))
-              }
-              className="border border-border rounded-lg p-3 bg-card text-foreground"
-            />
-
-            <TextInput
-              placeholder="Image URL (optional)"
-              value={formData.image}
-              onChangeText={(text) =>
-                setFormData((prev) => ({ ...prev, image: text }))
-              }
-              className="border border-border rounded-lg p-3 bg-card text-foreground"
-            />
+      <Collapsible title="Add New Call">
+        {/* Caller Information */}
+        <View className="gap-4 pb-4">
+          <View className="flex-row items-center gap-2">
+            <User size={16} />
+            <Text className="text-sm font-medium">Caller Information</Text>
           </View>
 
-          {/* Screen Type Selection */}
-          <View className="space-y-3">
-            <View className="flex-row items-center gap-2">
-              <Settings size={16} />
-              <Text className="text-sm font-medium">Screen Type</Text>
-            </View>
+          <TextInput
+            placeholder="Caller Name"
+            value={formData.name}
+            onChangeText={(text) =>
+              setFormData((prev) => ({ ...prev, name: text }))
+            }
+            className="border border-border rounded-lg p-3 bg-card text-foreground"
+          />
 
-            <View className="flex-row gap-2">
-              {screenTypes.map((type) => (
+          <TextInput
+            placeholder="Phone Number"
+            value={formData.number}
+            onChangeText={(text) =>
+              setFormData((prev) => ({ ...prev, number: text }))
+            }
+            className="border border-border rounded-lg p-3 bg-card text-foreground"
+            keyboardType="phone-pad"
+          />
+
+          <TextInput
+            placeholder="Location"
+            value={formData.location}
+            onChangeText={(text) =>
+              setFormData((prev) => ({ ...prev, location: text }))
+            }
+            className="border border-border rounded-lg p-3 bg-card text-foreground"
+          />
+        </View>
+
+        {/* Screen Type Selection */}
+        <View className="gap-4 py-4">
+          <View className="flex-row items-center gap-2">
+            <User size={16} />
+            <Text className="text-sm font-medium">Screen Type</Text>
+          </View>
+
+          <View className="flex-row gap-2">
+            {screenTypes.map((type) => (
+              <Button
+                key={type.id}
+                variant={
+                  formData.screenType === type.id ? "default" : "outline"
+                }
+                onPress={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    screenType: type.id as any,
+                  }))
+                }
+                className="flex-1"
+              >
+                <Text>{type.name}</Text>
+                {type.iconComponent}
+              </Button>
+            ))}
+          </View>
+        </View>
+
+        {/* Schedule Settings */}
+        <View className="gap-4 py-4">
+          <View className="flex-row items-center gap-2">
+            <User size={16} />
+            <Text className="text-sm font-medium"> Schedule</Text>
+          </View>
+
+          <View className="flex-row gap-2">
+            <Button
+              variant="outline"
+              onPress={() => setShowDatePicker(true)}
+              className="flex-1"
+            >
+              <Calendar size={16} className="mr-2" />
+              <Text>{formatDate(formData.scheduledDate)}</Text>
+            </Button>
+
+            <Button
+              variant="outline"
+              onPress={() => setShowTimePicker(true)}
+              className="flex-1"
+            >
+              <Clock size={16} className="mr-2" />
+              <Text>{formatTime(formData.scheduledDate)}</Text>
+            </Button>
+          </View>
+
+          {/* Repeat Days */}
+          <View className="space-y-2">
+            <Text className="text-sm font-medium">Repeat on:</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {daysOfWeek.map((day) => (
                 <Button
-                  key={type.id}
+                  key={day.id}
                   variant={
-                    formData.screenType === type.id ? "default" : "outline"
+                    formData.repeatDays.includes(day.id) ? "default" : "outline"
                   }
-                  onPress={() =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      screenType: type.id as any,
-                    }))
-                  }
-                  className="flex-1"
+                  onPress={() => toggleRepeatDay(day.id)}
+                  className="px-3 py-1"
                 >
-                  <Text className="text-lg mr-1">{type.icon}</Text>
-                  <Text>{type.name}</Text>
+                  <Text className="text-xs">{day.name}</Text>
                 </Button>
               ))}
             </View>
           </View>
+        </View>
 
-          {/* Schedule Settings */}
-          <View className="space-y-3">
-            <View className="flex-row items-center gap-2">
-              <Calendar size={16} />
-              <Text className="text-sm font-medium">Schedule</Text>
-            </View>
+        {/* Action Buttons */}
+        <View className="flex-row gap-2 pt-4">
+          <Button
+            onPress={handleSaveCall}
+            className="flex-1"
+            disabled={!formData.name || !formData.number}
+          >
+            <Text>{editingCall ? "Update Call" : "Add Call"}</Text>
+          </Button>
 
-            <View className="flex-row gap-2">
-              <Button
-                variant="outline"
-                onPress={() => setShowDatePicker(true)}
-                className="flex-1"
-              >
-                <Calendar size={16} className="mr-2" />
-                <Text>{formatDate(formData.scheduledDate)}</Text>
-              </Button>
-
-              <Button
-                variant="outline"
-                onPress={() => setShowTimePicker(true)}
-                className="flex-1"
-              >
-                <Clock size={16} className="mr-2" />
-                <Text>{formatTime(formData.scheduledDate)}</Text>
-              </Button>
-            </View>
-
-            {/* Repeat Days */}
-            <View className="space-y-2">
-              <Text className="text-sm font-medium">Repeat on:</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {daysOfWeek.map((day) => (
-                  <Button
-                    key={day.id}
-                    variant={
-                      formData.repeatDays.includes(day.id)
-                        ? "default"
-                        : "outline"
-                    }
-                    onPress={() => toggleRepeatDay(day.id)}
-                    className="px-3 py-1"
-                  >
-                    <Text className="text-xs">{day.name}</Text>
-                  </Button>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          {/* Action Buttons */}
-          <View className="flex-row gap-2 pt-4">
+          {editingCall && (
             <Button
-              onPress={handleSaveCall}
-              className="flex-1"
-              disabled={!formData.name || !formData.number}
+              variant="outline"
+              onPress={() => {
+                setEditingCall(null);
+                setFormData({
+                  name: "",
+                  number: "",
+                  location: "",
+                  image: "",
+                  scheduledDate: new Date(),
+                  screenType: "samsung",
+                  repeatDays: [],
+                });
+              }}
             >
-              <Text>{editingCall ? "Update Call" : "Add Call"}</Text>
+              <Text>Cancel</Text>
             </Button>
-
-            {editingCall && (
-              <Button
-                variant="outline"
-                onPress={() => {
-                  setEditingCall(null);
-                  setFormData({
-                    name: "",
-                    number: "",
-                    location: "",
-                    image: "",
-                    scheduledDate: new Date(),
-                    screenType: "samsung",
-                    repeatDays: [],
-                  });
-                }}
-              >
-                <Text>Cancel</Text>
-              </Button>
-            )}
-          </View>
-        </CollapsibleContent>
+          )}
+        </View>
       </Collapsible>
-      <Card className="mb-6">
-        <CardContent className="space-y-4"></CardContent>
-      </Card>
 
       {/* Scheduled Calls List */}
       <Card>
@@ -361,9 +369,8 @@ export default function SettingsScreen() {
                       <Text className="text-sm text-muted-foreground">
                         {
                           screenTypes.find((t) => t.id === call.screenType)
-                            ?.icon
-                        }{" "}
-                        {call.screenType}
+                            ?.iconComponent
+                        }
                       </Text>
                     </View>
 
