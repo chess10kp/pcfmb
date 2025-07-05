@@ -1,11 +1,4 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import {
-  Calendar,
-  Clock,
-  Phone,
-  User,
-  View as ViewIcon,
-} from "lucide-react-native";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ScrollView, Switch, TextInput, View } from "react-native";
@@ -14,6 +7,14 @@ import { Collapsible } from "~/components/animated/collapsible";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
+import { Calendar } from "~/lib/icons/Calendar";
+import { Clock } from "~/lib/icons/Clock";
+import { Pencil } from "~/lib/icons/Pencil";
+import { Phone } from "~/lib/icons/Phone";
+import { Plus } from "~/lib/icons/Plus";
+import { Trash } from "~/lib/icons/Trash";
+import { User } from "~/lib/icons/User";
+import { View as ViewIcon } from "~/lib/icons/View";
 import { type ScheduledCall } from "~/lib/types/types";
 
 type Props = {
@@ -37,10 +38,10 @@ export default function SettingsScreen({
   } = useForm();
 
   const [formData, setFormData] = useState({
-    name: "",
-    number: "",
-    location: "",
-    image: "",
+    name: "Boss",
+    number: "1234567890",
+    location: "Dearborn, MI",
+    image: "https://via.placeholder.com/150",
     scheduledDate: new Date(),
     screenType: "samsung" as const,
     repeatDays: [] as string[],
@@ -50,7 +51,6 @@ export default function SettingsScreen({
     {
       id: "samsung",
       name: "Samsung",
-      icon: "📱",
       iconComponent: (color?: string) => (
         <AntDesign name="android" size={16} color={color || "currentColor"} />
       ),
@@ -58,7 +58,6 @@ export default function SettingsScreen({
     {
       id: "iphone",
       name: "iPhone",
-      icon: "🍎",
       iconComponent: (color?: string) => (
         <AntDesign name="apple1" size={16} color={color || "currentColor"} />
       ),
@@ -66,7 +65,6 @@ export default function SettingsScreen({
     {
       id: "pixel",
       name: "Pixel",
-      icon: "📱",
       iconComponent: (color?: string) => (
         <AntDesign name="google" size={16} color={color || "currentColor"} />
       ),
@@ -111,7 +109,10 @@ export default function SettingsScreen({
       screenType: "samsung",
       repeatDays: [],
     });
+
     setEditingCall(null);
+    setShowDatePicker(false);
+    setShowTimePicker(false);
   };
 
   const handleEditCall = (call: ScheduledCall) => {
@@ -139,15 +140,6 @@ export default function SettingsScreen({
     );
   };
 
-  const toggleRepeatDay = (dayId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      repeatDays: prev.repeatDays.includes(dayId)
-        ? prev.repeatDays.filter((d) => d !== dayId)
-        : [...prev.repeatDays, dayId],
-    }));
-  };
-
   const formatDate = (date: Date) => {
     return date.toLocaleDateString();
   };
@@ -163,16 +155,17 @@ export default function SettingsScreen({
       </View>
 
       {/* Add/Edit Call Form */}
-      <Collapsible title="Add New Call">
+      <Collapsible title="Add New Call" triggerOpen={Plus} triggerClose={Plus}>
         {/* Caller Information */}
         <View className="gap-4 pb-4">
           <View className="flex-row items-center gap-2">
-            <User color="currentColor" size={16} />
+            <User color="white" size={16} />
             <Text className="text-sm font-medium">Caller Information</Text>
           </View>
 
           <TextInput
             placeholder="Caller Name"
+            placeholderClassName="text-foreground"
             value={formData.name}
             onChangeText={(text) =>
               setFormData((prev) => ({ ...prev, name: text }))
@@ -203,7 +196,7 @@ export default function SettingsScreen({
         {/* Screen Type Selection */}
         <View className="gap-4 py-4">
           <View className="flex-row items-center gap-2">
-            <User size={16} />
+            <User className="text-foreground" size={16} />
             <Text className="text-sm font-medium">Screen Type</Text>
           </View>
 
@@ -221,10 +214,12 @@ export default function SettingsScreen({
                   }))
                 }
               >
-                <Text>{type.name}</Text>
-                {type.iconComponent(
-                  formData.screenType === type.id ? "white" : undefined
-                )}
+                <View className="flex-row items-center gap-2">
+                  <Text>{type.name}</Text>
+                  {type.iconComponent(
+                    formData.screenType === type.id ? "black" : "white"
+                  )}
+                </View>
               </Button>
             ))}
           </View>
@@ -233,13 +228,13 @@ export default function SettingsScreen({
         {/* Schedule Settings */}
         <View className="gap-4 py-4">
           <View className="flex-row items-center gap-2">
-            <User size={16} />
+            <User className="text-foreground" size={16} />
             <Text className="text-sm font-medium"> Schedule</Text>
           </View>
 
           <View className="flex-row gap-2">
             <Button onPress={() => setShowDatePicker(true)} variant="outline">
-              <Calendar size={16} className="mr-2" />
+              <Calendar size={16} className="mr-2 text-foreground" />
               <Text>{formatDate(formData.scheduledDate)}</Text>
             </Button>
 
@@ -248,7 +243,7 @@ export default function SettingsScreen({
               onPress={() => setShowTimePicker(true)}
               className="flex-1"
             >
-              <Clock size={16} className="mr-2" />
+              <Clock size={16} className="mr-2 text-foreground" />
               <Text>{formatTime(formData.scheduledDate)}</Text>
             </Button>
           </View>
@@ -324,9 +319,6 @@ export default function SettingsScreen({
           {scheduledCalls.length === 0 ? (
             <View className="py-8 items-center">
               <Phone size={48} className="text-muted-foreground mb-2" />
-              <Text className="text-muted-foreground text-center">
-                No scheduled calls yet.{"\n"}Add your first call above.
-              </Text>
             </View>
           ) : (
             <View className="space-y-3">
@@ -377,15 +369,9 @@ export default function SettingsScreen({
                         size="sm"
                         onPress={() => handleEditCall(call)}
                       >
-                        <Text className="text-xs">Edit</Text>
+                        <Pencil className="text-primary" size={16} />
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onPress={() => handleDeleteCall(call.id)}
-                      >
-                        <Text className="text-xs text-destructive">Delete</Text>
-                      </Button>
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -406,7 +392,14 @@ export default function SettingsScreen({
                           });
                         }}
                       >
-                        <ViewIcon color="currentColor" size={16} />
+                        <ViewIcon className="text-foreground" size={16} />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onPress={() => handleDeleteCall(call.id)}
+                      >
+                        <Trash className="text-destructive" size={16} />
                       </Button>
                     </View>
                   </View>

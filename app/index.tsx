@@ -1,9 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 
 import { SamsungCallScreen } from "~/components/SamsungCallScreen";
 import SettingsScreen from "~/components/Settings";
-import { type ScheduledCall } from "~/lib/types/types";
+import { ScreenComponent, type ScheduledCall } from "~/lib/types/types";
+
+import * as Notifications from "expo-notifications";
+import { router } from "expo-router";
 
 export default function Screen() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -13,7 +16,13 @@ export default function Screen() {
   const previewScheduledCall = (caller: ScheduledCall) => {
     setIsPreviewMode(true);
     setCurrentPreviewedCall(caller);
-    console.log(caller);
+    router.push({
+      pathname: "/preview",
+      params: {
+        formData: JSON.stringify(caller),
+        currentPreviewedCall: JSON.stringify(caller),
+      },
+    });
   };
 
   const screens: ScreenComponent[] = useMemo(
@@ -41,20 +50,31 @@ export default function Screen() {
     );
   }, [currentPreviewedCall?.screenType, screens]);
 
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status: existingStatus } =
+        await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== "granted") {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== "granted") {
+        alert("Failed to get push notification permissions!");
+        return;
+      }
+      requestPermissions();
+    };
+
+    return () => {};
+  }, []);
+
   return (
     <View className="flex-1 bg-background text-foreground">
-      {isPreviewMode ? (
-        <currentScreen.component
-          {...currentScreen.defaultProps}
-          formData={currentPreviewedCall}
-          onClose={() => setIsPreviewMode(false)}
-        />
-      ) : (
-        <SettingsScreen
-          previewHandler={previewScheduledCall}
-          closeHandler={() => setIsPreviewMode(false)}
-        />
-      )}
+      <SettingsScreen
+        previewHandler={previewScheduledCall}
+        closeHandler={() => setIsPreviewMode(false)}
+      />
     </View>
   );
 }
