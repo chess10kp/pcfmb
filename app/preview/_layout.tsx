@@ -46,26 +46,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
       <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: isDarkColorScheme
-              ? NAV_THEME.dark.background
-              : NAV_THEME.light.background,
-          },
-          headerTintColor: isDarkColorScheme
-            ? NAV_THEME.dark.text
-            : NAV_THEME.light.text,
-        }}
-      >
+      <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen
           name="index"
-          options={{
-            title: "",
-          }}
-        />
-        <Stack.Screen
-          name="preview"
           options={{
             title: "",
           }}
