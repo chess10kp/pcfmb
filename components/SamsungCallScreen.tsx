@@ -9,9 +9,9 @@ import {
   Video,
   Volume2,
 } from "lucide-react-native";
-import { useContext, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Animated, ColorValue, Pressable, Text, View } from "react-native";
-import { InfoContext } from "~/app/index";
+import { type ScheduledCall } from "~/lib/types/types";
 import { cn } from "~/lib/utils";
 
 type Props = {
@@ -21,10 +21,12 @@ type Props = {
   rejectStrokeColor?: string;
   acceptFillColor?: string;
   acceptStrokeColor?: string;
+  formData: ScheduledCall | null;
+  onClose: () => void;
 };
 
 export const SamsungCallScreen = (props: Props) => {
-  const callerInformation = useContext(InfoContext);
+  const callerInformation = props.formData;
 
   const [isCallAccepted, setIsCallAccepted] = useState(false);
   const [isCallEnded, setIsCallEnded] = useState(false);
@@ -67,7 +69,7 @@ export const SamsungCallScreen = (props: Props) => {
                 props.textColor && `text-${props.textColor}`
               )}
             >
-              {callerInformation.callerName || callerInformation.callerNumber}
+              {callerInformation?.name || callerInformation?.number}
             </Text>
             <Text
               className={cn(
@@ -75,7 +77,7 @@ export const SamsungCallScreen = (props: Props) => {
                 props.textColor && `text-${props.textColor}`
               )}
             >
-              {callerInformation.callerLocation}
+              {callerInformation?.location}
             </Text>
           </View>
 

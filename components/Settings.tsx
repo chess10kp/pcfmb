@@ -1,49 +1,34 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Calendar, Clock, Phone, User } from "lucide-react-native";
-import { useRef, useState } from "react";
-import { useForm } from "react-hook-form";
 import {
-  Animated,
-  ScrollView,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+  Calendar,
+  Clock,
+  Phone,
+  User,
+  View as ViewIcon,
+} from "lucide-react-native";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { ScrollView, Switch, TextInput, View } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
 import { Collapsible } from "~/components/animated/collapsible";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Text } from "~/components/ui/text";
+import { type ScheduledCall } from "~/lib/types/types";
 
-interface ScheduledCall {
-  id: string;
-  name: string;
-  number: string;
-  location: string;
-  image: string;
-  scheduledDate: Date;
-  screenType: "samsung" | "iphone" | "pixel";
-  isActive: boolean;
-  repeatDays: string[];
-}
+type Props = {
+  previewHandler: (call: ScheduledCall) => void;
+  closeHandler: () => void;
+};
 
-export default function SettingsScreen() {
+export default function SettingsScreen({
+  previewHandler,
+  closeHandler,
+}: Props) {
   const [scheduledCalls, setScheduledCalls] = useState<ScheduledCall[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [editingCall, setEditingCall] = useState<ScheduledCall | null>(null);
-
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const animatedHeight = useRef(new Animated.Value(0)).current;
-
-  const toggleCollapsible = () => {
-    setIsCollapsed(!isCollapsed);
-    Animated.timing(animatedHeight, {
-      toValue: isCollapsed ? 0 : 1000,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-  };
 
   const {
     handleSubmit,
@@ -66,24 +51,24 @@ export default function SettingsScreen() {
       id: "samsung",
       name: "Samsung",
       icon: "📱",
-      iconComponent: (color: string) => (
-        <AntDesign name="android" size={16} color={color} />
+      iconComponent: (color?: string) => (
+        <AntDesign name="android" size={16} color={color || "currentColor"} />
       ),
     },
     {
       id: "iphone",
       name: "iPhone",
       icon: "🍎",
-      iconComponent: (color: string) => (
-        <AntDesign name="apple1" size={16} color={color} />
+      iconComponent: (color?: string) => (
+        <AntDesign name="apple1" size={16} color={color || "currentColor"} />
       ),
     },
     {
       id: "pixel",
       name: "Pixel",
       icon: "📱",
-      iconComponent: (color: string) => (
-        <AntDesign name="google" size={16} color={color} />
+      iconComponent: (color?: string) => (
+        <AntDesign name="google" size={16} color={color || "currentColor"} />
       ),
     },
   ];
@@ -172,7 +157,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background p-4">
+    <ScrollView className="flex-1 bg-background text-foreground p-4">
       <View>
         <Text className="text-3xl font-bold text-foreground ">Settings</Text>
       </View>
@@ -182,7 +167,7 @@ export default function SettingsScreen() {
         {/* Caller Information */}
         <View className="gap-4 pb-4">
           <View className="flex-row items-center gap-2">
-            <User size={16} />
+            <User color="currentColor" size={16} />
             <Text className="text-sm font-medium">Caller Information</Text>
           </View>
 
@@ -226,30 +211,19 @@ export default function SettingsScreen() {
             {screenTypes.map((type) => (
               <Button
                 key={type.id}
+                variant={
+                  formData.screenType === type.id ? "default" : "outline"
+                }
                 onPress={() =>
                   setFormData((prev) => ({
                     ...prev,
                     screenType: type.id as any,
                   }))
                 }
-                className={`flex-1 ${
-                  formData.screenType === type.id
-                    ? "bg-foreground text-background"
-                    : "bg-background text-foreground"
-                }`}
               >
-                <Text
-                  className={`${
-                    formData.screenType === type.id
-                      ? "text-background"
-                      : "text-foreground"
-                  }`}
-                >
-                  {type.name}
-                </Text>
-
+                <Text>{type.name}</Text>
                 {type.iconComponent(
-                  formData.screenType === type.id ? "white" : "black"
+                  formData.screenType === type.id ? "white" : undefined
                 )}
               </Button>
             ))}
@@ -264,11 +238,7 @@ export default function SettingsScreen() {
           </View>
 
           <View className="flex-row gap-2">
-            <Button
-              variant="outline"
-              onPress={() => setShowDatePicker(true)}
-              className="flex-1"
-            >
+            <Button onPress={() => setShowDatePicker(true)} variant="outline">
               <Calendar size={16} className="mr-2" />
               <Text>{formatDate(formData.scheduledDate)}</Text>
             </Button>
@@ -282,40 +252,50 @@ export default function SettingsScreen() {
               <Text>{formatTime(formData.scheduledDate)}</Text>
             </Button>
           </View>
-
-          {/* Repeat Days */}
-          <View className="space-y-2">
-            <Text className="text-sm font-medium">Repeat on:</Text>
-            <View className="flex-row flex-wrap gap-2">
-              {daysOfWeek.map((day) => (
-                <Button
-                  key={day.id}
-                  variant={
-                    formData.repeatDays.includes(day.id) ? "default" : "outline"
-                  }
-                  onPress={() => toggleRepeatDay(day.id)}
-                  className="px-3 py-1"
-                >
-                  <Text className="text-xs">{day.name}</Text>
-                </Button>
-              ))}
-            </View>
-          </View>
         </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={formData.scheduledDate}
+            mode="date"
+            onChange={(event, date) => {
+              setShowDatePicker(false);
+              if (date) {
+                setFormData((prev) => ({ ...prev, scheduledDate: date }));
+              }
+            }}
+          />
+        )}
+        {showTimePicker && (
+          <DateTimePicker
+            value={formData.scheduledDate}
+            mode="time"
+            onChange={(event, date) => {
+              setShowTimePicker(false);
+              if (date) {
+                setFormData((prev) => ({ ...prev, scheduledDate: date }));
+              }
+            }}
+          />
+        )}
 
         {/* Action Buttons */}
         <View className="flex-row gap-2 pt-4">
           <Button
             onPress={handleSaveCall}
-            className="flex-1"
-            disabled={!formData.name || !formData.number}
+            variant="default"
+            size="lg"
+            className="flex-1 bg-foreground text-background"
+            disabled={
+              !formData.name || !formData.number || !formData.scheduledDate
+            }
           >
             <Text>{editingCall ? "Update Call" : "Add Call"}</Text>
           </Button>
 
           {editingCall && (
             <Button
-              variant="outline"
+              variant="default"
               onPress={() => {
                 setEditingCall(null);
                 setFormData({
@@ -329,7 +309,7 @@ export default function SettingsScreen() {
                 });
               }}
             >
-              <Text>Cancel</Text>
+              Cancel
             </Button>
           )}
         </View>
@@ -365,7 +345,7 @@ export default function SettingsScreen() {
                       </Text>
                       {call.location && (
                         <Text className="text-muted-foreground text-sm">
-                          📍 {call.location}
+                          {call.location}
                         </Text>
                       )}
                     </View>
@@ -379,16 +359,15 @@ export default function SettingsScreen() {
                   <View className="flex-row justify-between items-center">
                     <View className="flex-row items-center gap-4">
                       <Text className="text-sm text-muted-foreground">
-                        📅 {formatDate(call.scheduledDate)}
+                        {formatDate(call.scheduledDate)}
                       </Text>
                       <Text className="text-sm text-muted-foreground">
-                        🕐 {formatTime(call.scheduledDate)}
+                        {formatTime(call.scheduledDate)}
                       </Text>
                       <Text className="text-sm text-muted-foreground">
-                        {
-                          screenTypes.find((t) => t.id === call.screenType)
-                            ?.iconComponent
-                        }
+                        {screenTypes
+                          .find((t) => t.id === call.screenType)
+                          ?.iconComponent(undefined)}
                       </Text>
                     </View>
 
@@ -407,54 +386,36 @@ export default function SettingsScreen() {
                       >
                         <Text className="text-xs text-destructive">Delete</Text>
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onPress={() => {
+                          previewHandler({
+                            id: call.id,
+                            name: call.name,
+                            number: call.number,
+                            location: call.location,
+                            image: call.image,
+                            scheduledDate: call.scheduledDate,
+                            screenType: call.screenType as
+                              | "samsung"
+                              | "iphone"
+                              | "pixel",
+                            isActive: call.isActive,
+                            repeatDays: call.repeatDays,
+                          });
+                        }}
+                      >
+                        <ViewIcon color="currentColor" size={16} />
+                      </Button>
                     </View>
                   </View>
-
-                  {call.repeatDays.length > 0 && (
-                    <View className="mt-2">
-                      <Text className="text-xs text-muted-foreground">
-                        🔄 Repeats:{" "}
-                        {call.repeatDays
-                          .map(
-                            (day) => daysOfWeek.find((d) => d.id === day)?.name
-                          )
-                          .join(", ")}
-                      </Text>
-                    </View>
-                  )}
                 </View>
               ))}
             </View>
           )}
         </CardContent>
       </Card>
-
-      {/* Date/Time Pickers */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={formData.scheduledDate}
-          mode="date"
-          onChange={(event, date) => {
-            setShowDatePicker(false);
-            if (date) {
-              setFormData((prev) => ({ ...prev, scheduledDate: date }));
-            }
-          }}
-        />
-      )}
-
-      {showTimePicker && (
-        <DateTimePicker
-          value={formData.scheduledDate}
-          mode="time"
-          onChange={(event, date) => {
-            setShowTimePicker(false);
-            if (date) {
-              setFormData((prev) => ({ ...prev, scheduledDate: date }));
-            }
-          }}
-        />
-      )}
     </ScrollView>
   );
 }
