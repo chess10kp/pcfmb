@@ -15,18 +15,23 @@ import { Plus } from "~/lib/icons/Plus";
 import { Trash } from "~/lib/icons/Trash";
 import { User } from "~/lib/icons/User";
 import { View as ViewIcon } from "~/lib/icons/View";
+import { NotificationService } from "~/lib/services/notificationService";
+import { StorageService } from "~/lib/services/storageService";
 import { type ScheduledCall } from "~/lib/types/types";
 
 type Props = {
   previewHandler: (call: ScheduledCall) => void;
   closeHandler: () => void;
+  scheduledCalls: ScheduledCall[];
+  setScheduledCalls: (calls: ScheduledCall[]) => void;
 };
 
 export default function SettingsScreen({
   previewHandler,
   closeHandler,
+  scheduledCalls,
+  setScheduledCalls,
 }: Props) {
-  const [scheduledCalls, setScheduledCalls] = useState<ScheduledCall[]>([]);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [editingCall, setEditingCall] = useState<ScheduledCall | null>(null);
@@ -81,22 +86,32 @@ export default function SettingsScreen({
     { id: "sunday", name: "Sun" },
   ];
 
-  const handleSaveCall = () => {
+  const handleSaveCall = async () => {
+    let newCall: ScheduledCall;
+
     if (editingCall) {
+      newCall = {
+        ...formData,
+        id: editingCall.id,
+        isActive: editingCall.isActive,
+      };
       setScheduledCalls((prev) =>
-        prev.map((call) =>
-          call.id === editingCall.id
-            ? { ...formData, id: call.id, isActive: call.isActive }
-            : call
-        )
+        prev.map((call) => (call.id === editingCall.id ? newCall : call))
       );
     } else {
-      const newCall: ScheduledCall = {
+      newCall = {
         id: Date.now().toString(),
         ...formData,
         isActive: true,
       };
       setScheduledCalls((prev) => [...prev, newCall]);
+    }
+
+    // Save to storage (this will trigger background service to pick it up)
+    try {
+      await StorageService.saveScheduledCalls(scheduledCalls);
+    } catch (error) {
+      console.error("Failed to save call to storage:", error);
     }
 
     // Reset form
@@ -128,16 +143,33 @@ export default function SettingsScreen({
     });
   };
 
-  const handleDeleteCall = (id: string) => {
+  const handleDeleteCall = async (id: string) => {
     setScheduledCalls((prev) => prev.filter((call) => call.id !== id));
+
+    // Update storage
+    try {
+      const updatedCalls = scheduledCalls.filter((call) => call.id !== id);
+      await StorageService.saveScheduledCalls(updatedCalls);
+    } catch (error) {
+      console.error("Failed to update storage after deletion:", error);
+    }
   };
 
-  const toggleCallActive = (id: string) => {
-    setScheduledCalls((prev) =>
-      prev.map((call) =>
-        call.id === id ? { ...call, isActive: !call.isActive } : call
-      )
+  const toggleCallActive = async (id: string) => {
+    const updatedCalls = scheduledCalls.map((call) =>
+      call.id === id ? { ...call, isActive: !call.isActive } : call
     );
+
+    setScheduledCalls(updatedCalls);
+
+    const updatedCall = updatedCalls.find((call) => call.id === id);
+    if (updatedCall) {
+      if (updatedCall.isActive) {
+        await NotificationService.scheduleCallNotification(updatedCall);
+      } else {
+        await NotificationService.cancelCallNotification(id);
+      }
+    }
   };
 
   const formatDate = (date: Date) => {

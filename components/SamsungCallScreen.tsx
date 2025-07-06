@@ -1,6 +1,14 @@
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef, useState } from "react";
-import { Animated, ColorValue, Pressable, Text, View } from "react-native";
+import { router } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  ColorValue,
+  Pressable,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Bluetooth } from "~/lib/icons/Bluetooth";
 import { EllipsisVertical } from "~/lib/icons/EllipsisVertical";
 import { Grip } from "~/lib/icons/Grip";
@@ -41,6 +49,15 @@ export const SamsungCallScreen = (props: Props) => {
   const acceptScale = useRef(new Animated.Value(1)).current;
   const rejectScale = useRef(new Animated.Value(1)).current;
   const [callDuration, setCallDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const toggleMute = () => {
+    setIsMuted((prev) => !prev);
+  };
+
+  const endCall = () => {
+    router.back();
+  };
 
   const animateButton = (scale: Animated.Value, toValue: number) => {
     scale.stopAnimation();
@@ -53,48 +70,51 @@ export const SamsungCallScreen = (props: Props) => {
     }).start();
   };
 
-  const callActions = [
-    [
-      {
-        icon: Plus,
-        label: "Add Call",
-        enabled: false,
-        onPress: () => {},
-      },
-      {
-        icon: Video,
-        label: "Video",
-        enabled: false,
-        onPress: () => {},
-      },
-      {
-        icon: Bluetooth,
-        label: "Bluetooth",
-        enabled: true,
-        onPress: () => {},
-      },
+  const callActions = useMemo(
+    () => [
+      [
+        {
+          icon: Plus,
+          label: "Add Call",
+          enabled: false,
+          onPress: () => {},
+        },
+        {
+          icon: Video,
+          label: "Video",
+          enabled: false,
+          onPress: () => {},
+        },
+        {
+          icon: Bluetooth,
+          label: "Bluetooth",
+          enabled: true,
+          onPress: () => {},
+        },
+      ],
+      [
+        {
+          icon: Volume2,
+          label: "Speaker",
+          enabled: true,
+          onPress: () => {},
+        },
+        {
+          icon: MicOff,
+          label: "Mute",
+          enabled: isMuted,
+          onPress: () => toggleMute(),
+        },
+        {
+          icon: Grip,
+          label: "Keypad",
+          enabled: true,
+          onPress: () => {},
+        },
+      ],
     ],
-    [
-      {
-        icon: Volume2,
-        label: "Speaker",
-        enabled: true,
-        onPress: () => {},
-      },
-      {
-        icon: MicOff,
-        label: "Mute",
-        enabled: false,
-        onPress: () => {},
-      },
-      {
-        icon: Grip,
-        label: "Keypad",
-        enabled: true,
-        onPress: () => {},
-      },
-    ],
-  ];
+    [isMuted]
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -231,25 +251,27 @@ export const SamsungCallScreen = (props: Props) => {
               {callActions.map((row, idx) => (
                 <View key={idx} className="flex-row justify-center gap-8 mb-4">
                   {row.map((action) => (
-                    <View
+                    <TouchableOpacity
                       key={action.label}
-                      className="w-20 h-20 rounded-full p-2 gap-2 items-center justify-center"
+                      onPress={action.onPress}
                     >
-                      <action.icon
-                        size={32}
-                        className={`${
-                          action.enabled ? "text-white" : "text-white/50"
-                        }`}
-                      />
-                      <Text
-                        className={cn(
-                          "text-sm",
-                          action.enabled ? "text-white" : "text-white/50"
-                        )}
-                      >
-                        {action.label}
-                      </Text>
-                    </View>
+                      <View className="w-20 h-20 rounded-full p-2 gap-2 items-center justify-center">
+                        <action.icon
+                          size={32}
+                          className={`${
+                            action.enabled ? "text-white" : "text-white/50"
+                          }`}
+                        />
+                        <Text
+                          className={cn(
+                            "text-sm",
+                            action.enabled ? "text-white" : "text-white/50"
+                          )}
+                        >
+                          {action.label}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               ))}
