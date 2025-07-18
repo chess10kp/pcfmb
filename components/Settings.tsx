@@ -23,7 +23,9 @@ type Props = {
   previewHandler: (call: ScheduledCall) => void;
   closeHandler: () => void;
   scheduledCalls: ScheduledCall[];
-  setScheduledCalls: (calls: ScheduledCall[]) => void;
+  setScheduledCalls:
+    | ScheduledCall[]
+    | ((calls: ScheduledCall[]) => ScheduledCall[]);
 };
 
 export default function SettingsScreen({
@@ -76,16 +78,6 @@ export default function SettingsScreen({
     },
   ];
 
-  const daysOfWeek = [
-    { id: "monday", name: "Mon" },
-    { id: "tuesday", name: "Tue" },
-    { id: "wednesday", name: "Wed" },
-    { id: "thursday", name: "Thu" },
-    { id: "friday", name: "Fri" },
-    { id: "saturday", name: "Sat" },
-    { id: "sunday", name: "Sun" },
-  ];
-
   const handleSaveCall = async () => {
     let newCall: ScheduledCall;
 
@@ -95,7 +87,7 @@ export default function SettingsScreen({
         id: editingCall.id,
         isActive: editingCall.isActive,
       };
-      setScheduledCalls((prev) =>
+      setScheduledCalls((prev: ScheduledCall[]) =>
         prev.map((call) => (call.id === editingCall.id ? newCall : call))
       );
     } else {
@@ -104,21 +96,22 @@ export default function SettingsScreen({
         ...formData,
         isActive: true,
       };
-      setScheduledCalls((prev) => [...prev, newCall]);
+      setScheduledCalls((prev: ScheduledCall[]) => [...prev, newCall]);
     }
 
-    // Save to storage (this will trigger background service to pick it up)
+    if (newCall.isActive) {
+      await NotificationService.scheduleCallNotification(newCall);
+    }
     try {
       await StorageService.saveScheduledCalls(scheduledCalls);
     } catch (error) {
       console.error("Failed to save call to storage:", error);
     }
 
-    // Reset form
     setFormData({
-      name: "",
-      number: "",
-      location: "",
+      name: "emcs",
+      number: "1234567890",
+      location: "Dearborn, MI",
       image: "",
       scheduledDate: new Date(),
       screenType: "samsung",
@@ -144,7 +137,9 @@ export default function SettingsScreen({
   };
 
   const handleDeleteCall = async (id: string) => {
-    setScheduledCalls((prev) => prev.filter((call) => call.id !== id));
+    setScheduledCalls((prev: ScheduledCall[]) =>
+      prev.filter((call) => call.id !== id)
+    );
 
     // Update storage
     try {
@@ -170,13 +165,23 @@ export default function SettingsScreen({
         await NotificationService.cancelCallNotification(id);
       }
     }
+
+    try {
+      await StorageService.saveScheduledCalls(updatedCalls);
+    } catch (error) {
+      console.error("Failed to update storage after toggle:", error);
+    }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString();
+  const formatDate = (date: Date | string) => {
+    if (date === undefined || date === null) return "";
+    if (typeof date === "string") return date.substring(0, 10);
+    return date.toDateString();
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (date: Date | string) => {
+    if (date === undefined || date === null) return "";
+    if (typeof date === "string") return date.substring(11, 16);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 

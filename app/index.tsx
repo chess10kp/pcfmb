@@ -132,7 +132,6 @@ export default function Screen() {
   };
 
   const handleNotificationReject = () => {
-    // Handle call rejection logic here
     console.log("Call rejected:", notificationCall);
   };
 

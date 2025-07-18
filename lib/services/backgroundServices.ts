@@ -6,7 +6,6 @@ import { type ScheduledCall } from "~/lib/types/types";
 
 const BACKGROUND_FETCH_TASK = "background-fetch";
 
-// Configure notification handler for background notifications
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -20,47 +19,47 @@ Notifications.setNotificationHandler({
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     console.log("Background fetch task running...");
-    
-    // Get scheduled calls from storage
+
     const callsJson = await AsyncStorage.getItem("scheduledCalls");
     const calls: ScheduledCall[] = callsJson ? JSON.parse(callsJson) : [];
-    
+
     const now = new Date();
-    const dueCalls = calls.filter(call => {
+    const dueCalls = calls.filter((call) => {
       if (!call.isActive) return false;
       const scheduledTime = new Date(call.scheduledDate);
-      // Check if call is due within the last 5 minutes (to catch missed calls)
-      return scheduledTime <= now && scheduledTime > new Date(now.getTime() - 5 * 60 * 1000);
+      return (
+        scheduledTime <= now &&
+        scheduledTime > new Date(now.getTime() - 5 * 60 * 1000)
+      );
     });
 
     if (dueCalls.length > 0) {
       console.log(`Found ${dueCalls.length} due calls`);
-      
-      // Schedule immediate notification for the first due call
+
       const dueCall = dueCalls[0];
       await Notifications.scheduleNotificationAsync({
         content: {
           title: `Incoming Call: ${dueCall.name}`,
-          body: `Call from ${dueCall.number} at ${new Date(dueCall.scheduledDate).toLocaleTimeString()}`,
-          data: { 
+          body: `Call from ${dueCall.number} at ${new Date(
+            dueCall.scheduledDate
+          ).toLocaleTimeString()}`,
+          data: {
             type: "scheduled_call",
             callId: dueCall.id,
-            callData: JSON.stringify(dueCall)
+            callData: JSON.stringify(dueCall),
           },
           sound: true,
           priority: Notifications.AndroidNotificationPriority.HIGH,
           autoDismiss: false,
         },
-        trigger: null, // Show immediately
+        trigger: null,
       });
 
-      // Mark this call as processed to avoid duplicate notifications
-      const updatedCalls = calls.map(call => 
-        call.id === dueCall.id 
-          ? { ...call, lastProcessed: now.toISOString() }
-          : call
+      const updatedCalls = calls.filter((call) => call.id !== dueCall.id);
+      await AsyncStorage.setItem(
+        "scheduledCalls",
+        JSON.stringify(updatedCalls)
       );
-      await AsyncStorage.setItem("scheduledCalls", JSON.stringify(updatedCalls));
     }
 
     return BackgroundFetch.BackgroundFetchResult.NewData;
@@ -75,12 +74,12 @@ export class BackgroundService {
     try {
       const status = await BackgroundFetch.getStatusAsync();
       console.log("Background fetch status:", status);
-      
+
       if (status === BackgroundFetch.BackgroundFetchStatus.Available) {
         await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-          minimumInterval: 15 * 60, // 15 minutes minimum (iOS limitation)
-          stopOnTerminate: false, // Continue after app is terminated
-          startOnBoot: true, // Start on device boot
+          minimumInterval: 15 * 60,
+          stopOnTerminate: true,
+          startOnBoot: true,
         });
         console.log("Background fetch registered successfully");
       } else {
