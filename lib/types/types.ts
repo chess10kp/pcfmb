@@ -10,8 +10,10 @@ export interface ScheduledCall {
   repeatDays: string[];
 }
 
-export  interface ScreenComponent {
-    name: "samsung" | "iphone" | "pixel";
-    component: React.ComponentType<any>;
-    defaultProps: any;
-  }
+export interface ScreenComponent {
+  id: string;
+  iconComponent: (color?: string) => React.ReactNode;
+  name: string;
+  component: React.ComponentType<any>;
+  defaultProps: any;
+}
