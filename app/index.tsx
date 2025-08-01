@@ -1,18 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { View } from "react-native";
 
-import { NotificationPopup } from "~/components/NotificationPopup";
 import { SamsungCallScreen } from "~/components/SamsungCallScreen";
-import SettingsScreen from "~/components/Settings";
 import { NotificationService } from "~/lib/services/notificationService";
 import { ScreenComponent, type ScheduledCall } from "~/lib/types/types";
 
 import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
+import { AppleCallScreen } from "~/components/AppleCallScreen";
 
 export default function Screen() {
-  const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const [currentPreviewedCall, setCurrentPreviewedCall] =
     useState<ScheduledCall | null>(null);
 
@@ -22,7 +18,6 @@ export default function Screen() {
   const [scheduledCalls, setScheduledCalls] = useState<ScheduledCall[]>([]);
 
   const previewScheduledCall = (caller: ScheduledCall) => {
-    setIsPreviewMode(true);
     setCurrentPreviewedCall(caller);
     router.push({
       pathname: "/preview",
@@ -47,16 +42,21 @@ export default function Screen() {
           rejectStrokeColor: "red",
         },
       },
+      {
+        name: "apple",
+        component: AppleCallScreen,
+        defaultProps: {
+          backgroundColors: ["#1a1a2e", "#4a275a", "#20b2aa"] as const,
+          textColor: "white",
+          acceptFillColor: "green",
+          acceptStrokeColor: "green",
+          rejectFillColor: "red",
+          rejectStrokeColor: "red",
+        },
+      },
     ],
     []
   );
-
-  const currentScreen = useMemo(() => {
-    if (!currentPreviewedCall?.screenType) return null;
-    return screens.find(
-      (screen) => screen.name === currentPreviewedCall?.screenType
-    );
-  }, [currentPreviewedCall?.screenType, screens]);
 
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
@@ -127,7 +127,6 @@ export default function Screen() {
   }, []);
 
   const handleNotificationAccept = () => {
-    // Handle call acceptance logic here
     console.log("Call accepted:", notificationCall);
   };
 
@@ -141,21 +140,30 @@ export default function Screen() {
   };
 
   return (
-    <View className="flex-1 bg-background text-foreground">
-      <SettingsScreen
-        previewHandler={previewScheduledCall}
-        closeHandler={() => setIsPreviewMode(false)}
-        scheduledCalls={scheduledCalls}
-        setScheduledCalls={setScheduledCalls}
-      />
+    // <View className="flex-1 bg-background text-foreground">
+    //   <NotificationPopup
+    //     call={notificationCall}
+    //     visible={showNotification}
+    //     onAccept={handleNotificationAccept}
+    //     onReject={handleNotificationReject}
+    //     onClose={handleNotificationClose}
+    //   />
 
-      <NotificationPopup
-        call={notificationCall}
-        visible={showNotification}
-        onAccept={handleNotificationAccept}
-        onReject={handleNotificationReject}
-        onClose={handleNotificationClose}
-      />
-    </View>
+    //   <PresetLaunch />
+    // </View>
+    <AppleCallScreen
+      onClose={() => {}}
+      formData={{
+        id: "2",
+        name: "emacs lisp",
+        number: "3203948888",
+        location: "Dearborn, MI",
+        image: "",
+        scheduledDate: new Date(),
+        screenType: "apple",
+        isActive: true,
+        repeatDays: [],
+      }}
+    />
   );
 }

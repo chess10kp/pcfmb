@@ -1,5 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ScrollView, Switch, TextInput, View } from "react-native";
 import AntDesign from "react-native-vector-icons/AntDesign";
@@ -18,14 +18,13 @@ import { View as ViewIcon } from "~/lib/icons/View";
 import { NotificationService } from "~/lib/services/notificationService";
 import { StorageService } from "~/lib/services/storageService";
 import { type ScheduledCall } from "~/lib/types/types";
+import { formatDate, formatTime } from "~/lib/utils";
 
 type Props = {
   previewHandler: (call: ScheduledCall) => void;
   closeHandler: () => void;
   scheduledCalls: ScheduledCall[];
-  setScheduledCalls:
-    | ScheduledCall[]
-    | ((calls: ScheduledCall[]) => ScheduledCall[]);
+  setScheduledCalls: Dispatch<SetStateAction<ScheduledCall[]>>;
 };
 
 export default function SettingsScreen({
@@ -171,18 +170,6 @@ export default function SettingsScreen({
     } catch (error) {
       console.error("Failed to update storage after toggle:", error);
     }
-  };
-
-  const formatDate = (date: Date | string) => {
-    if (date === undefined || date === null) return "";
-    if (typeof date === "string") return date.substring(0, 10);
-    return date.toDateString();
-  };
-
-  const formatTime = (date: Date | string) => {
-    if (date === undefined || date === null) return "";
-    if (typeof date === "string") return date.substring(11, 16);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
   return (
