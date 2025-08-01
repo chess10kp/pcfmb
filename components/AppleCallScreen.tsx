@@ -10,7 +10,13 @@ import { Phone } from "~/lib/icons/Phone";
 import { Plus } from "~/lib/icons/Plus";
 import { Video } from "~/lib/icons/Video";
 import { Volume2 } from "~/lib/icons/Volume2";
+import { ScheduledCall } from "~/lib/types/types";
 import { cn } from "~/lib/utils";
+
+type Props = {
+  formData: ScheduledCall;
+  textColor: string;
+};
 
 export const AppleCallScreen = (props: Props) => {
   const callerInformation = props.formData;
@@ -113,7 +119,6 @@ export const AppleCallScreen = (props: Props) => {
   return (
     <LinearGradient
       colors={["#222224", "#222224"]}
-      u
       className={cn("flex-1", props.textColor && `text-${props.textColor}`)}
     >
       {!isCallAccepted && !isCallEnded && (
@@ -223,7 +228,7 @@ export const AppleCallScreen = (props: Props) => {
               {/* Row 3 */}
               <View className="flex-row justify-center gap-4">
                 <View className="w-20 h-20 rounded-full p-2 items-center justify-center mt-8">
-                  <View className="bg-[#FE3628] rounded-full p-4">
+                  <View id="end-call" className="bg-[#FE3628] rounded-full p-4">
                     <Phone
                       size={32}
                       color={"white"}
