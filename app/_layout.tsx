@@ -7,12 +7,19 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { PortalHost } from "@rn-primitives/portal";
-import { Stack } from "expo-router";
+import { Tabs, usePathname, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Appearance, Platform } from "react-native";
-import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
+import { View } from "react-native";
+import {
+  Tabs as TabComponent,
+  TabsList,
+  TabsTrigger,
+} from "~/components/ui/tabs";
+import { Text } from "~/components/ui/text";
 import { NAV_THEME } from "~/lib/constants";
+import { Home } from "~/lib/icons/Home";
+import { Plus } from "~/lib/icons/Plus";
 import { useColorScheme } from "~/lib/useColorScheme";
 
 const LIGHT_THEME: Theme = {
@@ -24,19 +31,43 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 };
 
-export {
-  // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
-const usePlatformSpecificSetup = Platform.select({
-  web: useSetWebBackgroundClassName,
-  android: useSetAndroidNavigationBar,
-  default: noop,
-});
+const TABS = [
+  { name: "index", title: "Home", icon: Home },
+  { name: "add", title: "Add", icon: Plus },
+];
+
+const TabBar = () => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const activeTab = pathname === "/" ? "index" : "add";
+
+  return (
+    <View className="bg-background border-t border-border">
+      <TabComponent value={activeTab} onValueChange={(value) => {}}>
+        <TabsList className="flex-row">
+          {TABS.map((tab) => (
+            <TabsTrigger
+              key={tab.name}
+              value={tab.name}
+              onPress={() => {
+                router.push(tab.name === "index" ? "/" : `/${tab.name}`);
+              }}
+              className="flex-1"
+            >
+              <tab.icon size={16} color="white" className="w-4 h-4" />
+              <Text>{tab.title}</Text>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </TabComponent>
+    </View>
+  );
+};
 
 export default function RootLayout() {
-  usePlatformSpecificSetup();
   const { isDarkColorScheme, setColorScheme } = useColorScheme();
 
   React.useEffect(() => {
@@ -46,7 +77,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
       <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
-      <Stack
+      <Tabs
+        initialRouteName="index"
+        tabBar={() => <TabBar />}
         screenOptions={{
           headerStyle: {
             backgroundColor: isDarkColorScheme
@@ -58,40 +91,22 @@ export default function RootLayout() {
             : NAV_THEME.light.text,
         }}
       >
-        <Stack.Screen
+        <Tabs.Screen
           name="index"
           options={{
-            title: "",
+            title: "Home",
           }}
         />
-        <Stack.Screen
-          name="preview"
+        <Tabs.Screen
+          name="add"
           options={{
-            title: "",
+            title: "Add",
           }}
         />
-      </Stack>
+      </Tabs>
       <PortalHost />
     </ThemeProvider>
   );
-}
-
-const useIsomorphicLayoutEffect =
-  Platform.OS === "web" && typeof window === "undefined"
-    ? React.useEffect
-    : React.useLayoutEffect;
-
-function useSetWebBackgroundClassName() {
-  useIsomorphicLayoutEffect(() => {
-    // Adds the background color to the html element to prevent white background on overscroll.
-    document.documentElement.classList.add("bg-background");
-  }, []);
-}
-
-function useSetAndroidNavigationBar() {
-  React.useLayoutEffect(() => {
-    setAndroidNavigationBar(Appearance.getColorScheme() ?? "light");
-  }, []);
 }
 
 function noop() {}
